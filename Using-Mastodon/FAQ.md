@@ -127,7 +127,9 @@ Click their avatar pic. This will take you directly to their instance, which dis
 Click the toot body for **Expanded View**. This will show threads the toot’s connected to.
 
 #### How do I link to toots?
-Click the toot body for a **Expanded View**. Right-click on the **date beneath** the toot for a permalink.
+Right-click the timestamp in the header of the toot (e.g. “24 minutes ago”), and choose “Copy Link Location”.
+
+![Clicking timestamp](https://assets.octodon.social/media_attachments/files/000/074/777/original/c7ca94d3fe3f74a5.png?1492919617)
 
 #### How do I link to my bio?
 In Firefox, right-click on your avatar picture. Select **Copy link location**.
