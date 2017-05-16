@@ -10,6 +10,7 @@
 
 ### [Using the API](Using-the-API)
 - [API documentation](Using-the-API/API.md)
+- [Libraries](Using-the-API/Libraries.md)
 - [Streaming API documentation](Using-the-API/Streaming-API.md)
 - [Testing the API with cURL](Using-the-API/Testing-with-cURL.md)
 - [OAuth details](Using-the-API/OAuth-details.md)
@@ -17,6 +18,9 @@
 - [Push notifications](Using-the-API/Push-notifications.md)
 
 ### [Running Mastodon](Running-Mastodon)
+
+**Please note**: It is highly recommended to run a [tagged release](https://github.com/tootsuite/mastodon/releases) of Mastodon and **not** run off the current `master` branch.
+
 - [Resources needed](Running-Mastodon/Resources-needed.md)
 - [Production guide](Running-Mastodon/Production-guide.md)
 - [Docker guide](Running-Mastodon/Docker-Guide.md)

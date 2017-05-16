@@ -12,7 +12,9 @@ The following HTTP headers are already set internally and should not be set agai
 
 ## Nginx
 
-Regardless of whether you go with the Docker approach or not, here is an example Nginx server configuration:
+Regardless of whether you go with the Docker approach or not, here is an example Nginx server configuration.
+
+At a minimum, you'll want to replace any occurrence of `example.com` with your actual hostname, and `/home/mastodon/live/public` with the location of your actual mastodon `public/` directory.
 
 ```nginx
 map $http_upgrade $connection_upgrade {
@@ -30,13 +32,12 @@ server {
 }
 
 server {
-  listen 443 ssl;
-  listen [::]:443 ssl;
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
   server_name example.com;
 
   ssl_protocols TLSv1.2;
-  ssl_ciphers EECDH+AESGCM:EECDH+AES;
-  ssl_ecdh_curve prime256v1;
+  ssl_ciphers HIGH:!MEDIUM:!LOW:!aNULL:!NULL:!SHA;
   ssl_prefer_server_ciphers on;
   ssl_session_cache shared:SSL:10m;
 
@@ -60,13 +61,15 @@ server {
   gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
   add_header Strict-Transport-Security "max-age=31536000";
+  add_header Content-Security-Policy "style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'self'; img-src data: https:; media-src data: https:; connect-src 'self' wss://example.com; upgrade-insecure-requests";
 
   location / {
     try_files $uri @proxy;
   }
 
-  location /assets {
+  location ~ ^/(assets|system/media_attachments/files|system/accounts/avatars) {
     add_header Cache-Control "public, max-age=31536000, immutable";
+    try_files $uri @proxy;
   }
 
   location @proxy {
@@ -110,34 +113,70 @@ server {
 
 ## Running in production without Docker
 
-It is recommended to create a special user for mastodon on the server (you could call the user `mastodon`), though remember to disable outside login for it. You should only be able to get into that user through `sudo su - mastodon`.
+It is recommended to create a special user for mastodon on the server (you could call the user `mastodon`), though remember to disable outside login for it. You should only be able to get into that user through `sudo -u mastodon`.
 
 ## General dependencies
 
-    sudo apt-get install imagemagick ffmpeg libpq-dev libxml2-dev libxslt1-dev nodejs file git curl
-    curl -sL https://deb.nodesource.com/setup_4.x | sudo bash -
+### Ubuntu / Debian
 
+    sudo apt-get install imagemagick ffmpeg libpq-dev libxml2-dev libxslt1-dev file git curl g++ libprotobuf-dev protobuf-compiler
+    curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
     sudo apt-get install nodejs
+    sudo npm install -g yarn
+    
+* **NOTE**: On Debian you have to first add the [Debian Backports](https://backports.debian.org/) repository to install `ffmpeg`.
 
+### CentOS / RHEL
+
+    sudo yum install libxml2-devel ImageMagick libxslt-devel git curl file g++ protobuf-compiler protobuf-devel
+    sudo yum -y install epel-release
+    sudo rpm --import http://li.nux.ro/download/nux/RPM-GPG-KEY-nux.ro
+    sudo rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm
+    sudo yum -y install ffmpeg ffmpeg-devel
+
+    sudo yum group install "Development tools"
+    curl -sL https://rpm.nodesource.com/setup_6.x | sudo bash -
+    sudo yum install nodejs
     sudo npm install -g yarn
 
 ## Redis
 
+### Ubuntu / Debian
+
     sudo apt-get install redis-server redis-tools
+
+### CentOS / RHEL
+
+    sudo yum install redis rubygem-redis
 
 ## Postgres
 
+### Ubuntu / Debian
+
     sudo apt-get install postgresql postgresql-contrib
+
+### CentOS / RHEL
+
+    sudo yum install postgresql-server postgresql postgresql-contrib postgresql-devel
+
+Initial Setup postgres:
+
+    sudo postgresql-setup initdb
+    sudo systemctl start postgresql
+    sudo systemctl enable postgresql
+
+### All Operating Systems:
 
 Set up a user and database for Mastodon:
 
-    sudo su - postgres
-    psql
+    sudo -u postgres psql
 
 In the prompt:
 
     CREATE USER mastodon CREATEDB;
     \q
+
+### Ubuntu 16.04
 
 Under Ubuntu 16.04, you will need to explicitly enable ident authentication so that local users can connect to the database without a password:
 
@@ -152,6 +191,16 @@ and install an ident daemon, which does not come installed by default:
     sudo systemctl start pidentd
     sudo systemctl restart postgresql
 
+### Debian 8
+
+Under Debian 8, the default version of nginx available is too old to work with the above configuration file (as it uses http2). To install a newer version of nginx that supports http2 (v1.9.5+), you have to add the jessie-backports repo to your `sources.list.d`:
+
+```bash
+$ echo "deb http://ftp.debian.org/debian/ jessie-backports main" | sudo tee /etc/apt/sources.list.d/backports.list
+$ sudo apt-get update
+$ sudo apt-get install -t jessie-backports nginx
+```
+
 ## Rbenv
 
 It is recommended to use rbenv (exclusively from the `mastodon` user) to install the desired Ruby version. Follow the guides to [install rbenv][1] and [rbenv-build][2] (I recommend checking the [prerequisites][3] for your system on the rbenv-build project and installing them beforehand, obviously outside the unprivileged `mastodon` user)
@@ -164,7 +213,11 @@ Then once `rbenv` is ready, run `rbenv install 2.4.1` to install the Ruby versio
 
 ## Git
 
-You need the `git-core` package installed on your system. If it is so, from the `mastodon` user:
+You need the `git-core` package installed on your system. If it is so, run the shell from the `mastodon` user:
+
+    sudo -su mastodon
+
+And enter the following commands:
 
     cd ~
     git clone https://github.com/tootsuite/mastodon.git live
@@ -175,7 +228,7 @@ Then you can proceed to install project dependencies:
 
     gem install bundler
     bundle install --deployment --without development test
-    yarn install
+    yarn install --pure-lockfile
 
 ## Configuration
 
@@ -298,7 +351,7 @@ As part of your deploy, you may need to run:
 
 if anything in the `/db/` directory has changed, and/or
 
-- `yarn install`
+- `yarn install --pure-lockfile`
 - `RAILS_ENV=production bundle exec rails assets:precompile`
 
 if anything in the `/app/assets` directory changed.

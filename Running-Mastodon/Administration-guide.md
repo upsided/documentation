@@ -9,6 +9,11 @@ The following rake task:
 
     RAILS_ENV=production bundle exec rails mastodon:make_admin USERNAME=alice
 
+or, if using docker:
+
+    docker-compose run --rm web rails mastodon:make_admin USERNAME=alice
+
+
 Would turn the local user "alice" into an admin.
 
 ## Administration web interface
@@ -61,6 +66,14 @@ only have a user record and an avatar record, with no files uploaded.
     user.save!
 
 This will create a new user as if they had walked through the registration process and confirmed their account, and will immediately be able to log in.  Make sure the user resets their password away from the temporary password you give them!
+
+## Activity monitoring
+
+Munin graphs can be generated to track your instance activity.
+
+* https://github.com/cquest/mastodon-munin-plugins
+* https://framagit.org/framasoft/munin-plugins/tree/master/mastodon
+* https://github.com/0xa/mastodon-munin
 
 ## Mastodon-admin mailing list
 

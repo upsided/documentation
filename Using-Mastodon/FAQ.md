@@ -1,6 +1,10 @@
 Frequently Asked Questions
 ==========================
 
+Translations of this FAQ:
+
+* [Español](FAQ_ESP.md)
+
 #### What is a Mastodon?
 
 A prehistoric animal, predecessor of the mammoth. Goes "toot."
@@ -135,7 +139,7 @@ Click on **Getting Started**, then **Extended Information**. An info page displa
 <img src="screenshots/admin_info.png" alt="Admin Info" height="200"/>
 
 #### Wow, I keep seeing offensive stuff from a particular instance, is there a way to block *all* of it?
-Not without a lot of clicking, sorry. But, your instance admin can do it! Please contact her.
+Not without a lot of clicking, sorry. But, your instance admin can do it! Please contact them.
 
 #### Is Mastodon moderated?
 Each instance handles moderation differently, and each has their own moderators. It’s okay to ask what the rules are for the instance you are on. Usually the rules are posted on the instance's about page ([like the “more” page at Mastodon.social](https://mastodon.social/about/more))
@@ -229,6 +233,13 @@ By default, toots are federated (public), and will show on both timelines. You c
 <img src="screenshots/toolbar-getting_started.png" alt="Getting Started Button" height="200"/>
 <img src="screenshots/getting_started-preferences.png" alt="Preferences" height="200"/>
 <img src="screenshots/preferences-post_privacy.png" alt="Post Privacy" height="400"/>
+
+#### What is the default image upload size limit and how can I change it?
+The default limit is 8 megabytes, however this can be changed by editing the following line in `mastodon/app/models/media_attachment.rb`:
+
+`  validates_attachment_size :file, less_than: 8.megabytes`
+
+Change the 8 to another integer to change the limit.
 
 #### How do I start my own instance?
 See the [User Guide](../README.md), under the heading “Running Mastodon.”

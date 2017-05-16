@@ -3,6 +3,8 @@ Development guide
 
 **Don't use Docker to do development**. It's a quick way to get Mastodon running in production, it's **really really inconvenient for development**. Normally in Rails development environment you get hot reloading of backend code and on-the-fly compilation of assets like JS and CSS, but you lose those benefits by compiling a Docker image. If you want to contribute to Mastodon, it is worth it to simply set up a proper development environment.
 
+## Linux
+
 In fact, all you need is described in the [production guide](Production-guide.md), **with the following exceptions**. You **don't** need:
 
 - Nginx
@@ -11,19 +13,23 @@ In fact, all you need is described in the [production guide](Production-guide.md
 - To prefix any commands with `RAILS_ENV=production` since the default environment is "development" anyway
 - Any cronjobs
 
-The command to install Ruby project dependencies does not require any flags, i.e. simply
+The command to install Ruby project dependencies is the following:
 
-    bundle install
+    bundle install --with development
 
 Similarly, installing JavaScript dependencies doesn't require any flags:
 
-    yarn install
+    yarn install --pure-lockfile
 
 By default the development environment wants to connect to a `mastodon_development` database on localhost using your user/ident to login to Postgres (i.e. not a md5 password)
 
-You can run Mastodon with:
+To setup the `mastodon_development` database, run:
 
-    rails s
+    bundle exec rails db:setup
+
+You can then run Mastodon with:
+
+    bundle exec rails server
 
 And open `http://localhost:3000` in your browser. Background jobs run inline (aka synchronously) in the development environment, so you don't need to run a Sidekiq process. 
 
@@ -40,6 +46,78 @@ You can check localization status with:
 You can check code quality with:
 
     rubocop
+
+## Mac
+
+These are self-contained instructions for setting up a development environment on a macOS system. It is assumed that you’ve cloned your fork of Mastodon to a local working directory and that you are in Terminal and in that directory.
+
+### Prerequisites
+
+- Get [Xcode](https://developer.apple.com/xcode/) Command Line Tools:
+
+	```
+	xcode-select install
+	```
+
+- Get [Homebrew](https://brew.sh) and use it to install the other dependencies:
+
+	```
+	brew install imagemagick ffmpeg yarn postgresql redis rbenv nodejs
+	```
+
+- Configure Rbenv:
+
+	```
+	rbenv init
+	rbenv install 2.4.1
+	```
+
+- Install/configure bundler to use your local rbenv:
+
+	```
+	gem update --system
+	gem install bundler
+	rbenv rehash
+	```
+
+- Configure [PostgreSQL](https://www.postgresql.org):
+
+	```
+	initdb /usr/local/var/postgres -E utf8
+	createdb
+	export PGDATA=/usr/local/var/postgres
+	/usr/local/bin/postgres
+	/usr/local/bin/psql
+	```
+
+	In the prompt:
+
+	```
+	CREATE USER mastodon CREATEDB;
+	\q
+	```
+
+### Installation
+
+```
+bundle install --with development
+yarn install --pure-lockfile
+gem install foreman --no-ri --no-rdoc
+bundle exec rails db:setup
+bin/rails assets:precompile
+```
+
+### Running
+
+In separate Terminal windows/tabs:
+
+1. Start PostgreSQL: `/usr/local/bin/postgres`
+2. Start Redis: `redis-server`
+3. Start Mastodon (from the Mastodon folder): `foreman start`
+
+Go to http://localhost:3000 to see your development instance.
+
+Admin account is `admin@localhost:3000`. Password is `mastodonadmin`.
 
 ## Development tips
 
